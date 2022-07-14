@@ -2,8 +2,8 @@
 import pandas as pd
 from src import HugeGraphRestClient
 
-url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
-# url_base = "http://10.14.139.69:8080/graphspaces/DEFAULT/graphs/hugegraph/"
+# url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
+url_base = "http://10.14.139.69:8080/graphspaces/DEFAULT/graphs/hugegraph/"
 auth = ("admin", "admin")
 
 
@@ -41,6 +41,7 @@ def test_twitter_kout():
                 print(r)
 
     df = pd.DataFrame(result).T
+    df.loc['avg'] = df.mean().astype(dtype="int32")
     print(df)
 
 
