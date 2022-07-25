@@ -1,9 +1,24 @@
 import pandas as pd
+import logging
 from src import HugeGraphRestClient
 
-# url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
-url_base = "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraphn/"
+pd.options.display.width = 200
+# pd.options.display.max_colwidth = 50
+pd.options.display.max_columns = 20
+pd.options.display.max_rows = 50
+
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+# logger.setLevel(logging.INFO)
+
+
+url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
+# url_base = "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraph/"
 auth = ("admin", "admin")
+
+# url_base = "http://10.14.139.70:8080/graphs/hugegraph/"
+# auth = None
 
 
 def test_twitter_kout_get():
@@ -14,7 +29,9 @@ def test_twitter_kout_get():
 
     max_cap = 100000000
     result = {}
-    for depth in range(1, 3):
+    # depth_list = [1, 2, 3, 6, 23]
+    depth_list = [1]
+    for depth in depth_list:
         for vid in vids:
             r = client.do_kout_get({
                 "source": vid,
@@ -23,6 +40,7 @@ def test_twitter_kout_get():
                 "max_degree": max_cap,
                 "capacity": max_cap,
                 "limit": max_cap,
+                "concurrent": False
             })
 
             # print(r)
@@ -31,17 +49,17 @@ def test_twitter_kout_get():
 
             if "measure" in r:
                 m = r['measure']
-                print("vid: {}  count: {}  {}".format(vid, len(r['vertices']), m))
+                logger.info("depth: {}  vid: {}  count: {}  {}".format(depth, vid, len(r['vertices']), m))
                 result[vid].update({
                     'cost-{}'.format(depth): m['cost'],
                     'count-{}'.format(depth): len(r['vertices']),
                     'iters/s-{}'.format(depth): int(1000 * (m['edge_iters'] + m['vertice_iters']) / m['cost'])})
             else:
-                print(r)
+                logger.error("failed", r)
 
-    df = pd.DataFrame(result).T
-    df.loc['avg'] = df.mean().astype(dtype="int32")
-    print(df)
+        df = pd.DataFrame(result).T
+        df.loc['avg'] = df.mean().astype(dtype="int32")
+        print(df)
 
 
 def test_twitter_kout_post():
@@ -84,9 +102,9 @@ def test_twitter_kout_post():
             else:
                 print(r)
 
-    df = pd.DataFrame(result).T
-    df.loc['avg'] = df.mean().astype(dtype="int32")
-    print(df)
+        df = pd.DataFrame(result).T
+        df.loc['avg'] = df.mean().astype(dtype="int32")
+        print(df)
 
 
 if __name__ == '__main__':
