@@ -7,18 +7,39 @@ pd.options.display.width = 200
 pd.options.display.max_columns = 20
 pd.options.display.max_rows = 50
 
-
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 # logger.setLevel(logging.INFO)
 
-
-url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
-# url_base = "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraph/"
+# url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
+url_base = "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraph/"
 auth = ("admin", "admin")
+
 
 # url_base = "http://10.14.139.70:8080/graphs/hugegraph/"
 # auth = None
+
+
+def export_to_result(vid, depth, r, result):
+    if vid not in result:
+        result[vid] = {}
+
+    if "measure" in r:
+        m = r['measure']
+        iters = int(1000 * (m['edge_iters'] + m['vertice_iters']) / m['cost'])
+        logger.info("vid: {}  count: {}  iters/s: {}  {}".format(vid, len(r['vertices']), iters, m))
+        result[vid].update({
+            'cost-{}'.format(depth): m['cost'],
+            'count-{}'.format(depth): len(r['vertices']),
+            'iters/s-{}'.format(depth): iters})
+    else:
+        logger.error("failed: {}".format(r))
+
+
+def dump_result(result):
+    df = pd.DataFrame(result).T
+    df.loc['avg'] = df.mean().astype(dtype="int32")
+    print(df)
 
 
 def test_twitter_kout_get():
@@ -26,11 +47,12 @@ def test_twitter_kout_get():
 
     vids = [20727483, 50329304, 26199460, 1177521, 27960125,
             30440025, 15833920, 15015183, 33153097, 21250581]
+    # vids = [30440025, 15833920, 15015183, 33153097, 21250581]
 
     max_cap = 100000000
     result = {}
     # depth_list = [1, 2, 3, 6, 23]
-    depth_list = [1]
+    depth_list = [3]
     for depth in depth_list:
         for vid in vids:
             r = client.do_kout_get({
@@ -43,23 +65,10 @@ def test_twitter_kout_get():
                 "concurrent": False
             })
 
-            # print(r)
-            if vid not in result:
-                result[vid] = {}
+            r['size'] = len(r['vertices'])
+            export_to_result(vid, depth, r, result)
 
-            if "measure" in r:
-                m = r['measure']
-                logger.info("depth: {}  vid: {}  count: {}  {}".format(depth, vid, len(r['vertices']), m))
-                result[vid].update({
-                    'cost-{}'.format(depth): m['cost'],
-                    'count-{}'.format(depth): len(r['vertices']),
-                    'iters/s-{}'.format(depth): int(1000 * (m['edge_iters'] + m['vertice_iters']) / m['cost'])})
-            else:
-                logger.error("failed", r)
-
-        df = pd.DataFrame(result).T
-        df.loc['avg'] = df.mean().astype(dtype="int32")
-        print(df)
+        dump_result(result)
 
 
 def test_twitter_kout_post():
@@ -88,23 +97,9 @@ def test_twitter_kout_post():
                 "count_only": True
             })
 
-            if vid not in result:
-                result[vid] = {}
+            export_to_result(vid, depth, r, result)
 
-            if "measure" in r:
-                # print(r)
-                m = r['measure']
-                print("vid: {}  count: {}  {}".format(vid, r['size'], m))
-                result[vid].update({
-                    'cost-{}'.format(depth): m['cost'],
-                    'count-{}'.format(depth): r['size'],
-                    'iters/s-{}'.format(depth): int(1000 * (m['edge_iters'] + m['vertice_iters']) / m['cost'])})
-            else:
-                print(r)
-
-        df = pd.DataFrame(result).T
-        df.loc['avg'] = df.mean().astype(dtype="int32")
-        print(df)
+        dump_result(result)
 
 
 if __name__ == '__main__':
