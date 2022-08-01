@@ -2,6 +2,7 @@
 
 import pandas as pd
 import logging
+import argparse
 from src import HugeGraphRestClient
 
 pd.options.display.width = 200
@@ -20,15 +21,15 @@ logger = logging.getLogger(__name__)
 # logger.setLevel(logging.INFO)
 
 # url_base = "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/"
-url_base = "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraph/"
-auth = ("admin", "admin")
 
+hosts = {
+    "69": "http://10.14.139.69:8085/graphspaces/DEFAULT/graphs/hugegraph/",
+    "71": "http://10.14.139.71:8085/graphspaces/DEFAULT/graphs/hugegraph/",
+}
+auth = ("admin", "admin")
 
 # url_base = "http://10.14.139.70:8080/graphs/hugegraph/"
 # auth = None
-
-# depth_list = [1, 2, 3, 6, 23]
-depth_list = [1, 2, 3]
 
 
 def export_to_result(vid, depth, r, result):
@@ -53,9 +54,11 @@ def dump_result(result, depth):
     logger.info("dumping result {}\n{}".format(depth, df))
 
 
-def test_twitter_kout_get():
+def test_twitter_kout_get(args):
 
-    logging.info("start kout-get({}) test. server={}".format(depth_list, url_base))
+    depth_list = args.depths
+    url_base = hosts[args.host]
+    logging.info("start kout-get({}) test. server={}, depths={}".format(depth_list, url_base, depth_list))
     client = HugeGraphRestClient(url_base, auth)
 
     vids = [20727483, 50329304, 26199460, 1177521, 27960125,
@@ -82,7 +85,11 @@ def test_twitter_kout_get():
         dump_result(result, depth)
 
 
-def test_twitter_kout_post():
+def test_twitter_kout_post(args):
+    depth_list = args.depths
+    url_base = hosts[args.host]
+    logging.info("start kout-post({}) test. server={}, depths={}".format(depth_list, url_base, depth_list))
+
     client = HugeGraphRestClient(url_base, auth)
 
     vids = [20727483, 50329304, 26199460, 1177521, 27960125,
@@ -114,5 +121,15 @@ def test_twitter_kout_post():
 
 
 if __name__ == '__main__':
-    test_twitter_kout_get()
-    # test_twitter_kout_post()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--method", choices=["get", "post"], default='get', type=str, help="http method for kout, default is 'get'")
+    parser.add_argument("--depths", nargs="*", default=[1, 2, 3], type=int, help="depth_list. default: '1 2 3'")
+    parser.add_argument("--host", choices=hosts.keys(), default='69', type=str, help="hugegraph server host, default is '69'")
+
+    args = parser.parse_args()
+
+    if args.method == 'get':
+        test_twitter_kout_get(args)
+    else:
+        test_twitter_kout_post(args)
