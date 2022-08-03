@@ -31,6 +31,9 @@ auth = ("admin", "admin")
 # url_base = "http://10.14.139.70:8080/graphs/hugegraph/"
 # auth = None
 
+default_vids = [20727483, 50329304, 26199460, 1177521, 27960125,
+            30440025, 15833920, 15015183, 33153097, 21250581]
+
 
 def export_to_result(vid, depth, r, result):
     if vid not in result:
@@ -55,17 +58,14 @@ def dump_result(result, depth):
 
 
 def test_twitter_kout_get(args):
-
     depth_list = args.depths
     url_base = hosts[args.host]
-    logging.info("start kout-get({}) test. server={}, depths={}".format(depth_list, url_base, depth_list))
+    max_cap = args.max_cap
+    vids = args.vids
+    logging.info("start kout-get({}) test for server={}\ndepths={}, max_cap={}, vids={}"
+                 .format(depth_list, url_base, depth_list, max_cap, vids))
     client = HugeGraphRestClient(url_base, auth)
 
-    vids = [20727483, 50329304, 26199460, 1177521, 27960125,
-            30440025, 15833920, 15015183, 33153097, 21250581]
-    # vids = [30440025, 15833920, 15015183, 33153097, 21250581]
-
-    max_cap = 100000000
     result = {}
     for depth in depth_list:
         for vid in vids:
@@ -88,15 +88,14 @@ def test_twitter_kout_get(args):
 def test_twitter_kout_post(args):
     depth_list = args.depths
     url_base = hosts[args.host]
-    logging.info("start kout-post({}) test. server={}, depths={}".format(depth_list, url_base, depth_list))
+    max_cap = args.max_cap
+    vids = args.vids
+    logging.info("start kout-post({}) test for server={}\ndepths={}, max_cap={}, vids={}"
+                 .format(depth_list, url_base, depth_list, max_cap, vids))
 
     client = HugeGraphRestClient(url_base, auth)
 
-    vids = [20727483, 50329304, 26199460, 1177521, 27960125,
-            30440025, 15833920, 15015183, 33153097, 21250581]
-
     # 接口只支持最多 2000万
-    max_cap = 20000000
     result = {}
     for depth in depth_list:
         for vid in vids:
@@ -124,12 +123,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--method", choices=["get", "post"], default='get', type=str, help="http method for kout, default is 'get'")
-    parser.add_argument("--depths", nargs="*", default=[1, 2, 3], type=int, help="depth_list. default: '1 2 3'")
+    parser.add_argument("--depths", nargs="+", default=[1, 2, 3], type=int, help="depth_list. default: '1 2 3'")
     parser.add_argument("--host", choices=hosts.keys(), default='69', type=str, help="hugegraph server host, default is '69'")
+    parser.add_argument("--max_cap", default=100000000, type=int, help="max_capacity during kout. default: 100000000")
+    parser.add_argument("--vids", nargs="+", default=default_vids, type=int, help="vid list. default: {}".format(default_vids))
 
     args = parser.parse_args()
 
     if args.method == 'get':
         test_twitter_kout_get(args)
-    else:
+    elif args.method == 'post':
         test_twitter_kout_post(args)
