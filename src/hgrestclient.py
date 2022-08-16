@@ -21,7 +21,11 @@ class HugeGraphRestClient:
     def do_get(self, api, params):
         url = self.url_base + api
         start = time.time()
-        r = requests.get(url, params, auth=self.auth)
+        try:
+            r = requests.get(url, params, auth=self.auth)
+        except Exception as e:
+            logger.error("get({}) failed with exception: {}".format(url, e))
+            raise e
         end = time.time()
         if r.status_code == 200:
             return self.normalize(r.json(), int((end-start) * 1000))
@@ -31,7 +35,11 @@ class HugeGraphRestClient:
     def do_post(self, api, params):
         url = self.url_base + api
         start = time.time()
-        r = requests.post(url, json=params, auth=self.auth)
+        try:
+            r = requests.post(url, json=params, auth=self.auth)
+        except Exception as e:
+            logger.error("get({}) failed with exception: {}".format(url, e))
+            raise e
         end = time.time()
         if r.status_code == 200:
             return self.normalize(r.json(), int((end-start) * 1000))
