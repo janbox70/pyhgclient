@@ -53,3 +53,12 @@ class HugeGraphRestClient:
     def do_kout_post(self, params):
         r = self.do_post("traversers/kout", params)
         return r
+
+    def do_kneighbor_get(self, params):
+        r = self.do_get("traversers/kneighbor", params)
+        return r
+
+    def do_kneighbor_post(self, params):
+        r = self.do_post("traversers/kneighbor", params)
+        return r
+
