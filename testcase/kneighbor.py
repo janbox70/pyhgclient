@@ -1,7 +1,7 @@
 #!-*- coding:utf-8
 
 import logging
-from util import dump_result, export_to_result
+from .util import dump_result, export_to_result
 
 logger = logging.getLogger("kneighbor")
 

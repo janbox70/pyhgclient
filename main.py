@@ -53,8 +53,13 @@ if __name__ == '__main__':
                         help="max_capacity. default: 100000000")
     parser.add_argument("--vids", nargs="+", default=default_vids, type=int,
                         help="vid list. default: {}".format(default_vids))
+    parser.add_argument("--strvid", default=False, type=bool,
+                        help="use string vid, default is false")
 
     args = parser.parse_args()
+
+    if args.strvid:
+        args.vids = ['"' + str(v) + '"' for v in args.vids]
 
     url_base = hosts[args.host].format(args.graph)
     client = HugeGraphRestClient(url_base, auth)
